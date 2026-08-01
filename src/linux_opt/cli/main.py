@@ -74,45 +74,50 @@ def scan(output_format: str) -> None:
 @click.option(
     "--format",
     "output_format",
-    type=click.Choice(["json", "text"]),
+    type=click.Choice(["text", "json", "yaml", "markdown", "csv"]),
     default="text",
     help="Output format for the recommendation report.",
 )
-def analyze(output_format: str) -> None:
+@click.option(
+    "--output",
+    "output_path",
+    type=click.Path(dir_okay=False, writable=True),
+    default=None,
+    help="Write the report to this file instead of stdout.",
+)
+def analyze(output_format: str, output_path: str | None) -> None:
     """Collect system data and print ranked recommendations (FR-009 format)."""
     _load_collectors()
 
     from linux_opt.recommendations import generate_recommendations
 
-    _results, recommendations = generate_recommendations()
+    results, recommendations = generate_recommendations()
 
-    if output_format == "json":
-        payload = [
-            {
-                "severity": r.severity.value,
-                "problem": r.problem,
-                "evidence": r.evidence,
-                "recommendation": r.recommendation,
-                "expected_improvement": r.expected_improvement,
-                "source": r.source,
-            }
-            for r in recommendations
-        ]
-        click.echo(json.dumps(payload, indent=2))
-        return
+    if output_format == "text":
+        if not recommendations:
+            body = "No issues found.\n"
+        else:
+            lines = []
+            for r in recommendations:
+                lines.append(f"Severity: {r.severity.value.upper()}")
+                lines.append(f"Problem: {r.problem}")
+                lines.append(f"Evidence: {r.evidence}")
+                lines.append(f"Recommendation: {r.recommendation}")
+                if r.expected_improvement:
+                    lines.append(f"Expected Improvement: {r.expected_improvement}")
+                lines.append("")
+            body = "\n".join(lines)
+    else:
+        from linux_opt.reporting import render
 
-    if not recommendations:
-        click.echo("No issues found.")
-        return
+        body = render(output_format, results, recommendations)
 
-    for r in recommendations:
-        click.echo(f"Severity: {r.severity.value.upper()}")
-        click.echo(f"Problem: {r.problem}")
-        click.echo(f"Evidence: {r.evidence}")
-        click.echo(f"Recommendation: {r.recommendation}")
-        if r.expected_improvement:
-            click.echo(f"Expected Improvement: {r.expected_improvement}")
-        click.echo("")
+    if output_path:
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(body)
+        click.echo(f"Report written to {output_path}")
+    else:
+        click.echo(body)
 
 
 def main() -> None:
