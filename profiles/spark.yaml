@@ -1,0 +1,10 @@
+name: spark
+description: Baseline sysctl tuning for a Spark executor/worker host
+sysctl:
+  vm.swappiness: 1
+  vm.overcommit_memory: 1
+  net.core.somaxconn: 4096
+  net.ipv4.tcp_tw_reuse: 1
+notes:
+  - Spark relies on large in-memory shuffle/cache buffers; keep swappiness near 0
+  - Executor memory (spark.executor.memory) tuning belongs in spark-defaults.conf, not here
