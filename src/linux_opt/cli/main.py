@@ -22,6 +22,7 @@ def _load_collectors() -> None:
     """
     try:
         import linux_opt.cpu  # noqa: F401
+        import linux_opt.disk  # noqa: F401
         import linux_opt.memory  # noqa: F401
         import linux_opt.numa  # noqa: F401
     except ImportError:
