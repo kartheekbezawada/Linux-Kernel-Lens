@@ -129,6 +129,39 @@ def benchmark() -> None:
         click.echo(f"{result.name:8s} {result.value:12.2f} {result.unit}")
 
 
+@cli.command()
+@click.option("--profile", "profile_name", required=True, help="Workload profile to apply, e.g. spark, postgres.")
+@click.option("--safe", is_flag=True, default=False, help="Show planned changes without applying them.")
+@click.option("--apply", "do_apply", is_flag=True, default=False, help="Actually write the sysctl changes (requires confirmation unless run non-interactively).")
+def tune(profile_name: str, safe: bool, do_apply: bool) -> None:
+    """Apply a workload tuning profile's sysctl values. Dry-run unless --apply is given."""
+    from linux_opt.config import load_profile
+    from linux_opt.optimizers import apply_change, plan_changes
+
+    try:
+        profile = load_profile(profile_name)
+    except FileNotFoundError as exc:
+        click.echo(str(exc), err=True)
+        raise SystemExit(1) from None
+
+    plans = plan_changes(profile)
+    for plan in plans:
+        marker = "no-op" if plan.no_op else "CHANGE"
+        click.echo(f"[{marker}] {plan.key}: {plan.current_value!r} -> {plan.desired_value!r}")
+
+    if safe or not do_apply:
+        click.echo("\nDry-run only. Re-run with --apply to make these changes.")
+        return
+
+    if not click.confirm("\nApply the above sysctl changes now?", default=False):
+        click.echo("Aborted, no changes made.")
+        return
+
+    for plan in plans:
+        apply_change(plan)
+    click.echo("Applied.")
+
+
 def main() -> None:
     cli()
 
