@@ -21,6 +21,7 @@ def _load_collectors() -> None:
     up automatically once imported.
     """
     try:
+        import linux_opt.collectors  # noqa: F401
         import linux_opt.cpu  # noqa: F401
         import linux_opt.disk  # noqa: F401
         import linux_opt.kernel  # noqa: F401
