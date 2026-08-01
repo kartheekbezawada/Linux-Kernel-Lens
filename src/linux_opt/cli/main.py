@@ -120,6 +120,15 @@ def analyze(output_format: str, output_path: str | None) -> None:
         click.echo(body)
 
 
+@cli.command()
+def benchmark() -> None:
+    """Run CPU/memory/disk/network micro-benchmarks and print a baseline."""
+    from linux_opt.benchmark import run_all
+
+    for result in run_all():
+        click.echo(f"{result.name:8s} {result.value:12.2f} {result.unit}")
+
+
 def main() -> None:
     cli()
 
