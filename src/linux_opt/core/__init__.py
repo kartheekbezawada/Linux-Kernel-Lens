@@ -7,7 +7,14 @@ from linux_opt.core.exceptions import (
     ReportGenerationError,
     UnsupportedPlatformError,
 )
-from linux_opt.core.registry import all_collectors, get_collector, register_collector
+from linux_opt.core.registry import (
+    all_analyzers,
+    all_collectors,
+    get_analyzer,
+    get_collector,
+    register_analyzer,
+    register_collector,
+)
 from linux_opt.core.result import CollectionResult, Recommendation, Severity, Status
 
 __all__ = [
@@ -19,8 +26,11 @@ __all__ = [
     "PermissionDeniedError",
     "ReportGenerationError",
     "UnsupportedPlatformError",
+    "all_analyzers",
     "all_collectors",
+    "get_analyzer",
     "get_collector",
+    "register_analyzer",
     "register_collector",
     "CollectionResult",
     "Recommendation",

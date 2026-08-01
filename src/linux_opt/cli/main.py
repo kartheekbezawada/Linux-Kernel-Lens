@@ -70,6 +70,51 @@ def scan(output_format: str) -> None:
             click.echo(f"    error: {err}")
 
 
+@cli.command()
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["json", "text"]),
+    default="text",
+    help="Output format for the recommendation report.",
+)
+def analyze(output_format: str) -> None:
+    """Collect system data and print ranked recommendations (FR-009 format)."""
+    _load_collectors()
+
+    from linux_opt.recommendations import generate_recommendations
+
+    _results, recommendations = generate_recommendations()
+
+    if output_format == "json":
+        payload = [
+            {
+                "severity": r.severity.value,
+                "problem": r.problem,
+                "evidence": r.evidence,
+                "recommendation": r.recommendation,
+                "expected_improvement": r.expected_improvement,
+                "source": r.source,
+            }
+            for r in recommendations
+        ]
+        click.echo(json.dumps(payload, indent=2))
+        return
+
+    if not recommendations:
+        click.echo("No issues found.")
+        return
+
+    for r in recommendations:
+        click.echo(f"Severity: {r.severity.value.upper()}")
+        click.echo(f"Problem: {r.problem}")
+        click.echo(f"Evidence: {r.evidence}")
+        click.echo(f"Recommendation: {r.recommendation}")
+        if r.expected_improvement:
+            click.echo(f"Expected Improvement: {r.expected_improvement}")
+        click.echo("")
+
+
 def main() -> None:
     cli()
 
