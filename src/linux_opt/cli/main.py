@@ -21,6 +21,7 @@ def _load_collectors() -> None:
     up automatically once imported.
     """
     try:
+        import linux_opt.collectors  # noqa: F401
         import linux_opt.cpu  # noqa: F401
         import linux_opt.disk  # noqa: F401
         import linux_opt.kernel  # noqa: F401
@@ -30,6 +31,22 @@ def _load_collectors() -> None:
         import linux_opt.scheduler  # noqa: F401
     except ImportError:
         pass
+
+
+def _load_plugins() -> None:
+    """Import plugin packages so their @register_plugin decorators run.
+
+    Mirrors _load_collectors() -- a new plugin just needs an import line
+    added here, no other CLI or engine changes. Each import is independent
+    (unlike _load_collectors' single try block) so one missing/broken
+    plugin module doesn't prevent the others from loading.
+    """
+    plugin_modules = ["linux_opt.plugins.postgres", "linux_opt.plugins.redis"]
+    for module_name in plugin_modules:
+        try:
+            __import__(module_name)
+        except ImportError:
+            pass
 
 
 @click.group()
@@ -74,7 +91,7 @@ def scan(output_format: str) -> None:
 @click.option(
     "--format",
     "output_format",
-    type=click.Choice(["text", "json", "yaml", "markdown", "csv"]),
+    type=click.Choice(["text", "json", "yaml", "markdown", "csv", "html", "pdf"]),
     default="text",
     help="Output format for the recommendation report.",
 )
@@ -92,6 +109,17 @@ def analyze(output_format: str, output_path: str | None) -> None:
     from linux_opt.recommendations import generate_recommendations
 
     results, recommendations = generate_recommendations()
+
+    if output_format == "pdf":
+        if not output_path:
+            click.echo("--output PATH is required for --format pdf (PDF can't print to a terminal).", err=True)
+            raise SystemExit(1)
+        from linux_opt.reporting import render_pdf
+
+        with open(output_path, "wb") as f:
+            f.write(render_pdf(results, recommendations))
+        click.echo(f"Report written to {output_path}")
+        return
 
     if output_format == "text":
         if not recommendations:
@@ -118,6 +146,26 @@ def analyze(output_format: str, output_path: str | None) -> None:
         click.echo(f"Report written to {output_path}")
     else:
         click.echo(body)
+
+
+@cli.command()
+def plugins() -> None:
+    """List registered workload plugins and whether each is detected on this host."""
+    _load_plugins()
+    from linux_opt.plugins import all_plugins
+
+    registered = all_plugins()
+    if not registered:
+        click.echo("No plugins registered.")
+        return
+
+    for name, cls in registered.items():
+        instance = cls()
+        try:
+            detected = instance.detect()
+        except Exception:  # noqa: BLE001 - listing plugins must never crash on a bad detect()
+            detected = False
+        click.echo(f"[{'DETECTED' if detected else 'not present'}] {name}")
 
 
 @cli.command()
