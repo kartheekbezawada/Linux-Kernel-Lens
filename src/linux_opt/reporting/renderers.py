@@ -14,6 +14,7 @@ import json
 import yaml
 
 from linux_opt.core.result import CollectionResult, Recommendation
+from linux_opt.reporting.pdf import build_pdf
 
 # Severity -> CSS class, used by render_html for color-coding rows.
 _SEVERITY_CLASS = {"critical": "sev-critical", "high": "sev-high", "medium": "sev-medium", "low": "sev-low"}
@@ -134,6 +135,32 @@ th, td {{ border: 1px solid #ccc; padding: 0.5rem; text-align: left; }}
 """
 
 
+def render_pdf(results: dict[str, CollectionResult], recommendations: list[Recommendation]) -> bytes:
+    """Returns bytes, unlike every other renderer here -- PDF is a binary
+    format. Callers (the CLI) need to write it with a binary file handle."""
+    lines = ["Linux Kernel Lens Report", "", "Collectors:"]
+    for name, result in results.items():
+        lines.append(f"  {name}: {result.status.value}")
+        for err in result.errors:
+            lines.append(f"    error: {err}")
+
+    lines += ["", "Recommendations:", ""]
+    if not recommendations:
+        lines.append("No issues found.")
+    for r in recommendations:
+        lines.append(f"Severity: {r.severity.value.upper()}")
+        lines.append(f"Problem: {r.problem}")
+        lines.append(f"Evidence: {r.evidence}")
+        lines.append(f"Recommendation: {r.recommendation}")
+        if r.expected_improvement:
+            lines.append(f"Expected Improvement: {r.expected_improvement}")
+        lines.append("")
+
+    return build_pdf(lines)
+
+
+# PDF is binary, so it's kept out of RENDERERS (which all return str) and
+# handled separately by callers that check for the "pdf" format explicitly.
 RENDERERS = {
     "json": render_json,
     "yaml": render_yaml,

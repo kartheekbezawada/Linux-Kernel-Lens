@@ -5,6 +5,7 @@ from linux_opt.reporting.renderers import (
     render_html,
     render_json,
     render_markdown,
+    render_pdf,
     render_yaml,
 )
 
@@ -15,5 +16,6 @@ __all__ = [
     "render_html",
     "render_json",
     "render_markdown",
+    "render_pdf",
     "render_yaml",
 ]

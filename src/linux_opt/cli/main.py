@@ -75,7 +75,7 @@ def scan(output_format: str) -> None:
 @click.option(
     "--format",
     "output_format",
-    type=click.Choice(["text", "json", "yaml", "markdown", "csv", "html"]),
+    type=click.Choice(["text", "json", "yaml", "markdown", "csv", "html", "pdf"]),
     default="text",
     help="Output format for the recommendation report.",
 )
@@ -93,6 +93,17 @@ def analyze(output_format: str, output_path: str | None) -> None:
     from linux_opt.recommendations import generate_recommendations
 
     results, recommendations = generate_recommendations()
+
+    if output_format == "pdf":
+        if not output_path:
+            click.echo("--output PATH is required for --format pdf (PDF can't print to a terminal).", err=True)
+            raise SystemExit(1)
+        from linux_opt.reporting import render_pdf
+
+        with open(output_path, "wb") as f:
+            f.write(render_pdf(results, recommendations))
+        click.echo(f"Report written to {output_path}")
+        return
 
     if output_format == "text":
         if not recommendations:
