@@ -26,6 +26,7 @@ def _load_collectors() -> None:
         import linux_opt.memory  # noqa: F401
         import linux_opt.network  # noqa: F401
         import linux_opt.numa  # noqa: F401
+        import linux_opt.scheduler  # noqa: F401
     except ImportError:
         pass
 
