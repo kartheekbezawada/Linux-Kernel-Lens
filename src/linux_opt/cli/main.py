@@ -14,6 +14,18 @@ from linux_opt.utils import get_logger
 logger = get_logger(__name__)
 
 
+def _load_collectors() -> None:
+    """Import collector packages so their @register_collector decorators run.
+
+    New collectors just need an entry here -- the registry and CLI pick them
+    up automatically once imported.
+    """
+    try:
+        import linux_opt.cpu  # noqa: F401
+    except ImportError:
+        pass
+
+
 @click.group()
 def cli() -> None:
     """linux-opt: Linux hardware/OS discovery, performance analysis, and tuning."""
@@ -29,6 +41,7 @@ def cli() -> None:
 )
 def scan(output_format: str) -> None:
     """Run every registered collector and print what it found."""
+    _load_collectors()
     collectors = all_collectors()
     if not collectors:
         click.echo("No collectors registered yet.", err=True)
