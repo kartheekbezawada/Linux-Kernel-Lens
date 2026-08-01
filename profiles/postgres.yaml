@@ -1,0 +1,11 @@
+name: postgres
+description: Baseline sysctl tuning for a dedicated PostgreSQL host
+sysctl:
+  vm.swappiness: 10
+  vm.overcommit_memory: 2
+  vm.dirty_background_ratio: 5
+  vm.dirty_ratio: 10
+  kernel.shmmax: 17179869184
+notes:
+  - Applies at the OS level only; shared_buffers/work_mem/checkpoint tuning belongs in postgresql.conf
+  - vm.overcommit_memory=2 requires enough swap + overcommit_ratio headroom to avoid unwanted OOM kills
