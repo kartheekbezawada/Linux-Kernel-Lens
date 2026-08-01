@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from linux_opt.core.base import Analyzer
+from linux_opt.core.registry import register_analyzer
 from linux_opt.core.result import CollectionResult, Recommendation, Severity
 
 
@@ -13,6 +14,7 @@ def _as_int(value: str | None) -> int | None:
         return None
 
 
+@register_analyzer
 class KernelSysctlAnalyzer(Analyzer):
     name = "kernel_sysctl"
 
