@@ -33,6 +33,22 @@ def _load_collectors() -> None:
         pass
 
 
+def _load_plugins() -> None:
+    """Import plugin packages so their @register_plugin decorators run.
+
+    Mirrors _load_collectors() -- a new plugin just needs an import line
+    added here, no other CLI or engine changes. Each import is independent
+    (unlike _load_collectors' single try block) so one missing/broken
+    plugin module doesn't prevent the others from loading.
+    """
+    plugin_modules = ["linux_opt.plugins.postgres", "linux_opt.plugins.redis"]
+    for module_name in plugin_modules:
+        try:
+            __import__(module_name)
+        except ImportError:
+            pass
+
+
 @click.group()
 def cli() -> None:
     """linux-opt: Linux hardware/OS discovery, performance analysis, and tuning."""
@@ -130,6 +146,26 @@ def analyze(output_format: str, output_path: str | None) -> None:
         click.echo(f"Report written to {output_path}")
     else:
         click.echo(body)
+
+
+@cli.command()
+def plugins() -> None:
+    """List registered workload plugins and whether each is detected on this host."""
+    _load_plugins()
+    from linux_opt.plugins import all_plugins
+
+    registered = all_plugins()
+    if not registered:
+        click.echo("No plugins registered.")
+        return
+
+    for name, cls in registered.items():
+        instance = cls()
+        try:
+            detected = instance.detect()
+        except Exception:  # noqa: BLE001 - listing plugins must never crash on a bad detect()
+            detected = False
+        click.echo(f"[{'DETECTED' if detected else 'not present'}] {name}")
 
 
 @cli.command()
