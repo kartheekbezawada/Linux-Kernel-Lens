@@ -75,7 +75,7 @@ def scan(output_format: str) -> None:
 @click.option(
     "--format",
     "output_format",
-    type=click.Choice(["text", "json", "yaml", "markdown", "csv"]),
+    type=click.Choice(["text", "json", "yaml", "markdown", "csv", "html"]),
     default="text",
     help="Output format for the recommendation report.",
 )
