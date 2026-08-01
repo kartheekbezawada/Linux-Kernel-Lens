@@ -11,9 +11,16 @@ spec this project is built against.
 ## Status
 
 Core pipeline (collect -> analyze -> report) is implemented for CPU, NUMA,
-memory, disk, network, scheduler, and kernel sysctl data. Plugin
-implementations for specific workloads (Postgres, Kafka, Spark, etc.) are not
-yet built -- only the profile files used by `tune` exist so far.
+memory, disk, network, scheduler, process, OS/distro, and kernel sysctl
+data, with analyzers turning most of that into recommendations. Postgres
+and Redis plugins exist; the rest of requirements.md section 7's plugin
+list (MySQL, Spark, Kubernetes, Kafka, etc.) doesn't yet.
+
+The repository only contains folders/files that are actually used --
+requirements.md documents a larger aspirational structure (docker/,
+examples/, additional test tiers, a full plugin directory per workload,
+etc.) that hasn't been built yet. See [ROADMAP.md](ROADMAP.md) for what's
+planned next.
 
 ## Install
 
